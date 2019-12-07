@@ -55,9 +55,9 @@ def _elements(msh_lines_df: pd.DataFrame, n_elements: int) -> pd.DataFrame:
 def _boundaries(msh_lines: pd.DataFrame) -> pd.DataFrame:
     boundaries_df = msh_lines.iloc[:, 0].str.strip().str.split(expand=True)
     boundaries_df.columns = list("bn")
+    boundaries_df = boundaries_df[~boundaries_df["n"].isnull()]
     boundaries_df = boundaries_df.applymap(int)
     boundaries_df.drop(columns="b", inplace=True)
-    boundaries_df = boundaries_df[~boundaries_df["n"].isnull()]
     boundaries_df.index.name = "b"
     boundaries_df.reset_index(inplace=True, drop=True)
     boundaries_df.index+=1
