@@ -13,10 +13,6 @@ class Msh(NamedTuple):
         return _load_msh(path)
 
 
-def _main(msh_path: Path, materials=None, steps=None) -> None:
-    msh = Msh.load_msh(msh_path)
-
-
 def _n_nodes(msh_lines_df: pd.DataFrame) -> int:
     n = msh_lines_df.iloc[0,0]
     msh_lines_df.drop(index=0, inplace=True)
