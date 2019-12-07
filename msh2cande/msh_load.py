@@ -27,7 +27,9 @@ def _n_nodes(msh_lines_df: pd.DataFrame) -> int:
 def _nodes(msh_lines_df: pd.DataFrame, n_nodes: int) -> pd.DataFrame:
     nodes_df: pd.DataFrame = msh_lines_df.iloc[:n_nodes, 0].str.strip().str.split(expand=True)
     nodes_df.columns = list("nxy")
+    nodes_df["n"] = nodes_df["n"].apply(int)
     nodes_df.set_index("n", inplace=True)
+    nodes_df = nodes_df.applymap(float)
     msh_lines_df.drop(index=range(n_nodes), inplace=True)
     msh_lines_df.reset_index(inplace=True, drop=True)
     return nodes_df
@@ -42,15 +44,24 @@ def _n_elements(msh_lines_df: pd.DataFrame) -> int:
 
 def _elements(msh_lines_df: pd.DataFrame, n_elements: int) -> pd.DataFrame:
     elements_df: pd.DataFrame = msh_lines_df.iloc[:n_elements, 0].str.strip().str.split(expand=True)
-    elements_df.columns = list("nijkl")
-    elements_df.set_index("n", inplace=True)
+    elements_df.columns = list("eijkl")
+    elements_df = elements_df.applymap(int)
+    elements_df.set_index("e", inplace=True)
     msh_lines_df.drop(index=range(n_elements), inplace=True)
     msh_lines_df.reset_index(inplace=True, drop=True)
     return elements_df
 
 
 def _boundaries(msh_lines: pd.DataFrame) -> pd.DataFrame:
-    return NotImplemented
+    boundaries_df = msh_lines.iloc[:, 0].str.strip().str.split(expand=True)
+    boundaries_df.columns = list("bn")
+    boundaries_df = boundaries_df.applymap(int)
+    boundaries_df.drop(columns="b", inplace=True)
+    boundaries_df = boundaries_df[~boundaries_df["n"].isnull()]
+    boundaries_df.index.name = "b"
+    boundaries_df.reset_index(inplace=True, drop=True)
+    boundaries_df.index+=1
+    return boundaries_df
 
 
 def _load_msh_df(msh_str: Sequence[str]) -> pd.DataFrame:
