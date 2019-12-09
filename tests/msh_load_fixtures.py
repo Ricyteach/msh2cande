@@ -23,20 +23,20 @@ def n_nodes(msh_lines_df, len_msh_lines):
 
 
 @pytest.fixture(scope="module")
-def nodes_df(msh_lines_df, len_msh_lines, n_nodes):
+def nodes_df(msh_lines_df, n_nodes):
     return _nodes(msh_lines_df, n_nodes)
 
 
 @pytest.fixture(scope="module")
-def n_elements(msh_lines_df, len_msh_lines, n_nodes, nodes_df):
+def n_elements(msh_lines_df, nodes_df):
     return _n_elements(msh_lines_df)
 
 
 @pytest.fixture(scope="module")
-def elements_df(msh_lines_df, len_msh_lines, n_nodes, nodes_df, n_elements):
+def elements_df(msh_lines_df, n_elements):
     return _elements(msh_lines_df, n_elements)
 
 
 @pytest.fixture(scope="module")
-def boundaries_df(msh_lines_df, len_msh_lines, n_nodes, nodes_df, n_elements, elements_df):
+def boundaries_df(msh_lines_df, elements_df):
     return _boundaries(msh_lines_df)
