@@ -10,14 +10,17 @@ class StructureError(Exception):
 
 @dataclass
 class Structure:
-    candidates_df: InitVar[DF]  # assumes candidates_df nodes are *IN STRUCTURAL ORDER*
+    candidates_df: DF  # assumes candidates_df nodes are *IN STRUCTURAL ORDER*
     nodes_df: InitVar[DF]
     elements_df: InitVar[DF]
     extents_df: InitVar[DF]
     df: DF = field(init=False)
 
-    def __post_init__(self, candidates_df: DF, nodes_df: DF, elements_df: DF, extents_df: DF):
-        self.df = _struct_df(candidates_df, nodes_df, extents_df)
+    def __post_init__(self, nodes_df: DF, elements_df: DF, extents_df: DF):
+        self.df = _struct_df(self.candidates_df, nodes_df, extents_df)
+        self.candidates_df = self.candidates_df.loc[self.candidates_df.index[self.candidates_df["n"].isin(self.df["n"])], :]
+        self.candidates_df = self.candidates_df.reset_index(drop=True)
+        self.candidates_df.index += 1
 
 
 def _struct_df(candidates_df: DF, nodes_df: DF, extents_df: DF) -> pd.DataFrame:
