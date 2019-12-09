@@ -18,3 +18,7 @@ def test_struct_df(struct_df_dirty, N_EXTENTS, N_BOUNDARIES):
 
 def test_struct(structure):
     assert structure
+
+
+def test_structure_show_candidates(structure):
+    structure.show_candidates()
