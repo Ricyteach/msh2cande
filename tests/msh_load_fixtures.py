@@ -1,6 +1,6 @@
 import pytest
 
-from msh2cande.msh_load import _load_msh_df, _n_nodes, _nodes, _n_elements, _elements, _boundaries
+from msh2cande.msh_load import _load_msh_df, _n_nodes, _nodes, _n_elements, _elements, _boundaries, _extents
 
 
 ##
@@ -40,3 +40,8 @@ def elements_df(msh_lines_df, n_elements):
 @pytest.fixture(scope="module")
 def boundaries_df(msh_lines_df, elements_df):
     return _boundaries(msh_lines_df)
+
+
+@pytest.fixture(scope="module")
+def extents_df(boundaries_df, nodes_df):
+    return _extents(nodes_df, boundaries_df)

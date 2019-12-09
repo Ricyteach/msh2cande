@@ -29,3 +29,7 @@ def test_elements(len_msh_lines, msh_lines_df, n_nodes, n_elements, elements_df)
 
 def test_boundaries(boundaries_df, N_BOUNDARIES):
     assert len(boundaries_df) == N_BOUNDARIES
+
+
+def test_extents(extents_df, N_EXTENTS):
+    assert len(extents_df) == N_EXTENTS

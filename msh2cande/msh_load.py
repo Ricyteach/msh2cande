@@ -79,3 +79,25 @@ def _load_msh_seq(msh_str: Sequence[str]) -> Msh:
 def _load_msh(msh_path: Path) -> Msh:
     with msh_path.open() as f:
         return _load_msh_seq(f.readlines())
+
+
+def _extents(nodes_df: DF, boundaries_df: DF):
+    boundaries_xy_df = nodes_df.loc[boundaries_df['n'], :]
+    minx = boundaries_xy_df['x'].min()
+    maxx = boundaries_xy_df['x'].max()
+    miny = boundaries_xy_df['y'].min()
+    maxy = boundaries_xy_df['y'].max()
+    at_extents = (boundaries_xy_df['x']==minx) | (boundaries_xy_df['x']==maxx) | (boundaries_xy_df['y']==miny) | (boundaries_xy_df['y']==maxy)
+    extents_df = boundaries_df.loc[boundaries_df.index[at_extents], :]
+    extents_xy_df = nodes_df.loc[extents_df['n'], :]
+    extents_df['xcode'] = ((extents_xy_df['x'] == minx) | (extents_xy_df['x'] == maxx)).astype(int).values
+    extents_df['xvalue'] = 0
+    extents_df['ycode'] = (extents_xy_df['y'] == miny).astype(int).values
+    extents_df['yvalue'] = 0
+    extents_df['angle'] = 0
+    # get all nodes excluding any top of mesh extent nodes that are x-free
+    is_step1 = (extents_xy_df['y'] != maxy).values | (extents_df['xcode'] != 0).values
+    extents_df['step'] = is_step1 * 1
+    extents_df = extents_df.reset_index(drop=True)
+    extents_df.index += 1
+    return extents_df

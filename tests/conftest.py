@@ -4012,6 +4012,7 @@ MSH = """1332
 NODES=1332
 ELEMENTS=2398
 BOUNDARIES=270
+EXTENTS=148
 
 
 @pytest.fixture(scope="session")
@@ -4032,3 +4033,8 @@ def N_ELEMENTS():
 @pytest.fixture(scope="session")
 def N_BOUNDARIES():
     return BOUNDARIES
+
+
+@pytest.fixture(scope="session")
+def N_EXTENTS():
+    return EXTENTS
