@@ -9,5 +9,5 @@ setup(
     author='Rick Teachey',
     author_email='ricky@teachey.org',
     description='Dead simple conversion of a mesh2D file to CANDE',
-    install_requires=['pandas']
+    install_requires=['pandas', 'plotly']
 )
