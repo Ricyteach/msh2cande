@@ -1,5 +1,6 @@
 import pytest
-from msh_load_fixtures import *
+
+pytest_plugins = ["msh_load_fixtures"]
 
 
 MSH = """1332
