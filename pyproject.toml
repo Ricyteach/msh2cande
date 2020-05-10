@@ -1,0 +1,20 @@
+[build-system]
+requires = ["flit_core >=2,<3"]
+build-backend = "flit_core.buildapi"
+
+[tool.flit.metadata]
+module = "msh2cande"
+author = "Rick Teachey"
+author-email = "ricky@teachey.org"
+home-page="https://github.com/Ricyteach/msh2cande"
+classifiers = ["License :: OSI Approved :: MIT License"]
+requires = [
+    "pandas",
+    "plotly",
+]
+
+[tool.flit.metadata.requires-extra]
+test = [
+    "pytest",
+    "pytest-runner",
+]
