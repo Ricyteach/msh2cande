@@ -1,6 +1,6 @@
 import pytest
 
-from msh2cande.cande import DelegatedInteger, SeqItemView, SeqNumberView
+from msh2cande.seqview import SeqItemView, DelegatedInteger, SeqNumberView
 
 
 @pytest.fixture
