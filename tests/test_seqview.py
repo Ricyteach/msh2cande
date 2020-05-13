@@ -1,6 +1,7 @@
 import pytest
 
 from msh2cande.seqview import SeqItemView, DelegatedInteger, SeqNumberView
+import pandas as pd
 
 
 @pytest.fixture
@@ -34,8 +35,13 @@ def test_delegated_integer_obj(delegated_obj):
 
 
 @pytest.fixture
-def seq():
-    return [1,2,3,4,5,6]
+def dataframe():
+    return pd.DataFrame(index=[1,2,3,4,5,6], columns=list('a'))
+
+
+@pytest.fixture
+def seq(dataframe):
+    return dataframe.index.values
 
 
 @pytest.fixture
@@ -74,7 +80,7 @@ import operator as op
                              (op.imod, op.mod),
                              (op.ipow, op.pow),
                          ])
-def test_seq_number_view_obj_operators(ifunc, func, seq_number_view_obj, seq, key):
-    original = seq[key]
+def test_seq_number_view_obj_operators(ifunc, func, seq_number_view_obj, seq, key, dataframe):
+    original = dataframe.index[key]
     ifunc(seq_number_view_obj, 1)
-    assert seq[key] == func(original, 1)
+    assert dataframe.index[key] == func(original, 1)
