@@ -24,6 +24,9 @@ class SeqItemView:
     def __eq__(self, other):
         return self.value == other
 
+    def __format__(self, format_spec):
+        return self.value.__format__(format_spec)
+
 
 class DelegatedInteger(numbers.Integral):
     @property
@@ -135,6 +138,9 @@ class DelegatedInteger(numbers.Integral):
 
 
 class SeqNumberView(SeqItemView, DelegatedInteger):
+    def __hash__(self):
+        return hash(self.value)
+
     def __iadd__(self, other):
         self.seq[self.key] += other
 

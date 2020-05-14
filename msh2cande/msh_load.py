@@ -1,6 +1,9 @@
+import itertools
 from pathlib import Path
-from typing import Sequence, NamedTuple
+from typing import Sequence, NamedTuple, Callable
 import pandas as pd
+
+from msh2cande.seqview import SeqNumberView
 
 DF = pd.DataFrame
 
@@ -11,8 +14,11 @@ class Msh(NamedTuple):
     boundaries: DF = None
 
     @classmethod
-    def load_msh(cls, path: Path):
-        return _load_msh(path)
+    def load_msh(cls, path: Path, *, clean: bool = True):
+        loaded_msh = _load_msh(path)
+        if clean:
+            _clean_msh(loaded_msh)
+        return loaded_msh
 
 
 def _n_nodes(msh_lines_df: DF) -> int:
@@ -40,17 +46,18 @@ def _n_elements(msh_lines_df: DF) -> int:
     return int(n)
 
 
-def _elements(msh_lines_df: DF, n_elements: int) -> DF:
+def _elements(msh_lines_df: DF, n_elements: int, nodes: DF) -> DF:
     elements_df: DF = msh_lines_df.iloc[:n_elements, 0].str.strip().str.split(expand=True)
     elements_df.columns = list("eijkl")
     elements_df = elements_df.applymap(int)
     elements_df.set_index("e", inplace=True)
+    elements_df = elements_df.applymap(nodes_numbers_view_factory(nodes))
     msh_lines_df.drop(index=range(n_elements), inplace=True)
     msh_lines_df.reset_index(inplace=True, drop=True)
     return elements_df
 
 
-def _boundaries(msh_lines: DF) -> DF:
+def _boundaries(msh_lines: DF, nodes: DF) -> DF:
     boundaries_df = msh_lines.iloc[:, 0].str.strip().str.split(expand=True)
     boundaries_df.columns = list("bn")
     boundaries_df = boundaries_df[~boundaries_df["n"].isnull()]
@@ -59,6 +66,7 @@ def _boundaries(msh_lines: DF) -> DF:
     boundaries_df.index.name = "b"
     boundaries_df.reset_index(inplace=True, drop=True)
     boundaries_df.index+=1
+    boundaries_df = boundaries_df.applymap(nodes_numbers_view_factory(nodes))
     return boundaries_df
 
 
@@ -71,8 +79,8 @@ def _load_msh_seq(msh_str: Sequence[str]) -> Msh:
     n_nodes: int = _n_nodes(msh_lines_df)
     nodes: DF = _nodes(msh_lines_df, n_nodes)
     n_elements: int = _n_elements(msh_lines_df)
-    elements: DF = _elements(msh_lines_df, n_elements)
-    boundaries: DF = _boundaries(msh_lines_df)
+    elements: DF = _elements(msh_lines_df, n_elements, nodes)
+    boundaries: DF = _boundaries(msh_lines_df, nodes)
     return Msh(nodes, elements, boundaries)
 
 
@@ -95,9 +103,57 @@ def _extents(nodes_df: DF, boundaries_df: DF):
     extents_df['ycode'] = (extents_xy_df['y'] == miny).astype(int).values
     extents_df['yvalue'] = 0
     extents_df['angle'] = 0
-    # get all nodes excluding any top of mesh extent nodes that are x-free
-    is_step1 = (extents_xy_df['y'] != maxy).values | (extents_df['xcode'] != 0).values
-    extents_df['step'] = is_step1 * 1
+    # get all extents nodes excluding any top of mesh nodes that are x-free
+    step1 = (extents_xy_df['y'] != maxy).values | (extents_df['xcode'] != 0)
+    extents_df['step'] = step1.astype(int).values
     extents_df = extents_df.reset_index(drop=True)
     extents_df.index += 1
     return extents_df
+
+
+def nodes_numbers_view_factory(nodes: DF) -> Callable[[int], SeqNumberView]:
+    nodes_index = nodes.index
+
+    def f(key: int):
+        index = nodes_index.get_loc(key)
+        return SeqNumberView(index, nodes_index.values)
+    return f
+
+
+def _clean_msh(msh: Msh):
+    """Fix common problems with Msh objects newly loaded from .msh file."""
+    _dedup_nodes(msh)
+
+
+def _dedup_nodes(msh: Msh, tol=0.001):
+    """Modify Msh object such that all nodes are assumed to be unique."""
+
+    nodes_df = msh.nodes
+
+    # change node numbering of firsts (including nodes that later have a dup)
+    c = itertools.count(start=1)
+    firsts_slicer = (nodes_df.duplicated() ^ nodes_df.duplicated(keep=False)) | ~ nodes_df.duplicated(keep=False)
+    firsts_index = nodes_df[firsts_slicer].index
+    # temporarily convert first indexes to strs so not overwritten later
+    nodes_df.rename({index:str(next(c)) for index in firsts_index}, inplace=True)
+
+    # get first duplicated nodes ("duped", excluding the duplicates that come after)
+    duped_slicer = nodes_df.duplicated() ^ nodes_df.duplicated(keep=False)
+    duped_index = nodes_df.index[duped_slicer]
+
+    # change the duplicate node numbers to match the first dupe
+    for duped_node_index in duped_index:
+        dupes_w_first_slicer = (nodes_df == nodes_df.loc[duped_node_index]).all(axis=1)
+        dupes_w_first_index = nodes_df[dupes_w_first_slicer].index
+        nodes_df.rename({index:duped_node_index for index in dupes_w_first_index if not isinstance(index, str)}, inplace=True)
+
+    # change nodes index back to ints; must use nodes_df.rename(inplace=True) to maintain element and boundary
+    # references to underlying index; yes this is probably slow
+    nodes_df.rename({index_str: int(index_str) for index_str in nodes_df.index}, inplace=True)
+
+    # TODO: clean duplicate boundaries
+
+    # # dupes (excluding any firsts)
+    # dupes_slicer = nodes_df.duplicated()
+    # dupes_index = nodes_df.index[dupes_slicer]
+    #
